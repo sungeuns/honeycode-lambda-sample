@@ -1,0 +1,240 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  order-app
+
+  for the honeycode testing
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+
+Resources:
+  HoneyTable01:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: honey-table-01
+      AttributeDefinitions: 
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: req_id
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: user_id
+          KeyType: HASH
+        - AttributeName: req_id
+          KeyType: RANGE
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+        
+  HoneyQueue02:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 120
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt HoneyDLQueue02.Arn
+        maxReceiveCount: 5
+  
+  HoneyDLQueue02:
+    Type: AWS::SQS::Queue
+  
+  HoneyQueue01:
+    Type: AWS::SQS::Queue
+    Properties:
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt HoneyDLQueue01.Arn
+        maxReceiveCount: 5
+  
+  HoneyDLQueue01:
+    Type: AWS::SQS::Queue
+    
+  PostChat:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: src/order-api/functions/post-chat/
+      Handler: app.postChat
+      Runtime: nodejs14.x
+      Timeout: 90
+      Events:
+        SQSEventSource:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt HoneyQueue02.Arn
+            BatchSize: 10
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref HoneyTable01
+          WORKBOOK_ID: '542f451c-3ccb-4b58-bb5c-fbae8b07b268'
+          SM_ENDPOINT: 'dolly-7b-djl-2023-06-05-06-43-01-321-endpoint'
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+            Resource:
+              - !Sub 
+                - 'arn:aws:dynamodb:*:*:table/${Table}'
+                - { Table: !Ref HoneyTable01 }
+          - Effect: Allow
+            Action:
+              - logs:*
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - honeycode:*
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - sagemaker:*
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - s3:*
+            Resource:
+              - "*"
+  PostOrders:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: src/order-api/functions/post-orders/
+      Handler: app.postOrders
+      Runtime: nodejs14.x
+      Timeout: 10
+      Events:
+        SQSEventSource:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt HoneyQueue01.Arn
+            BatchSize: 10
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref HoneyTable01
+          WORKBOOK_ID: '542f451c-3ccb-4b58-bb5c-fbae8b07b268'
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+            Resource:
+              - !Sub 
+                - 'arn:aws:dynamodb:*:*:table/${Table}'
+                - { Table: !Ref HoneyTable01 }
+          - Effect: Allow
+            Action:
+              - logs:*
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - honeycode:*
+            Resource:
+              - "*"
+
+  GetOrders:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: src/order-api/functions/get-orders/
+      Handler: app.getOrders
+      Runtime: nodejs14.x
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref HoneyTable01
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:Query 
+              - dynamodb:Scan
+            Resource:
+              - !Sub 
+                - 'arn:aws:dynamodb:*:*:table/${Table}'
+                - { Table: !Ref HoneyTable01 }
+          - Effect: Allow
+            Action:
+              - logs:*
+            Resource:
+              - "*"
+              
+  OrderApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Dev
+      Cors:
+        AllowMethods: "'POST, GET, UPDATE, DELETE'"
+        AllowHeaders: "'X-Forwarded-For'"
+        AllowOrigin: "'*'"
+        MaxAge: "'600'"
+      DefinitionBody:
+        'Fn::Transform':
+          Name: 'AWS::Include'
+          Parameters:
+            Location: './api.yaml'
+
+  ApiGwExecutionRole: 
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "apigateway.amazonaws.com"
+                - "lambda.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+
+  ApiGwExecutionPolicy: 
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      PolicyName: "apigw-execution-policy"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          Action:
+            - lambda:*
+            - sqs:SendMessage
+          Effect: Allow
+          Resource:
+            - !GetAtt GetOrders.Arn
+            - !GetAtt PostOrders.Arn
+            - !GetAtt HoneyQueue01.Arn
+            - !GetAtt HoneyQueue02.Arn
+      Roles: 
+        - Ref: "ApiGwExecutionRole"
+
+Outputs:
+  HoneyQueue02Url:
+    Description: "URL of honeycode queue"
+    Value: !Ref HoneyQueue02
+  HoneyDLQueu02Url:
+    Description: "URL of honeycode dead-letter queue"
+    Value: !Ref HoneyDLQueue02
+  HoneyQueue01Url:
+    Description: "URL of honeycode queue"
+    Value: !Ref HoneyQueue01
+  HoneyDLQueu01Url:
+    Description: "URL of honeycode dead-letter queue"
+    Value: !Ref HoneyDLQueue01
+  OrderApiEndpoint:
+    Description: "API Gateway endpoint URL for Dev stage for Order Get function"
+    Value: !Sub "https://${OrderApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/orders/"
+  PostOrders:
+    Description: "PostOrders Lambda Function ARN"
+    Value: !GetAtt PostOrders.Arn
+  GetOrders:
+    Description: "GetOrders Lambda Function ARN"
+    Value: !GetAtt GetOrders.Arn
+  DynamoDBTableName:
+    Description: "Honeycode DynamoDB Table Name"
+    Value: !Ref HoneyTable01
+
+  

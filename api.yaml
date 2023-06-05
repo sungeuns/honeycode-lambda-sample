@@ -1,0 +1,91 @@
+---
+swagger: "2.0"
+info:
+  version: "1.0"
+  title: "order-app"
+basePath: "/Dev"
+schemes:
+- "https"
+paths:
+  /orders:
+    get:
+      responses: {}
+      x-amazon-apigateway-integration:
+        credentials: 
+          Fn::GetAtt: [ ApiGwExecutionRole, Arn ]
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetOrders.Arn}/invocations
+        passthroughBehavior: "when_no_match"
+    post:
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "200 response"
+      x-amazon-apigateway-integration:
+        type: "aws"
+        credentials: 
+          Fn::GetAtt: [ ApiGwExecutionRole, Arn ]
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/${HoneyQueue01.QueueName}
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json: "Action=SendMessage&MessageBody={\"data\":$input.json('$')}"
+        passthroughBehavior: "when_no_match"
+  /chat:
+    post:
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "200 response"
+      x-amazon-apigateway-integration:
+        type: "aws"
+        credentials: 
+          Fn::GetAtt: [ ApiGwExecutionRole, Arn ]
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/${HoneyQueue02.QueueName}
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json: "Action=SendMessage&MessageBody={\"data\":$input.json('$')}"
+        passthroughBehavior: "when_no_match"
+  
+    # post:
+    #   consumes:
+    #   - "application/json"
+    #   produces:
+    #   - "application/json"
+    #   responses: {}
+    #   x-amazon-apigateway-integration:
+    #     type: "aws_proxy"
+    #     credentials: 
+    #       Fn::GetAtt: [ ApiGwExecutionRole, Arn ]
+    #     httpMethod: "POST"
+    #     uri:
+    #       Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PostOrders.Arn}/invocations
+    #     responses:
+    #       default:
+    #         statusCode: "200"
+    #     # requestParameters:
+    #     #   integration.request.header.X-Amz-Invocation-Type: '''Event'''
+    #     passthroughBehavior: "when_no_match"
+
+
+
+
