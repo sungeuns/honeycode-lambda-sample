@@ -41,6 +41,7 @@ const processFunction = async (parsedBody, messageId) => {
     const user_utter = parsedBody.user_utterance;
     console.log(`** Input ===>>> utter: ${user_utter}`);
     
+    // -------------------------------------------------------
     // ===== Invoke from SageMaker ======
     
     const inputValue = {
@@ -58,6 +59,8 @@ const processFunction = async (parsedBody, messageId) => {
     const sagemakerOutput = JSON.parse(invokeBody)[0]["generated_text"];
     
     console.log(`*** SageMaker output : ${sagemakerOutput}`);
+    
+    // -------------------------------------------------------
     
     const req_id = messageId;
     

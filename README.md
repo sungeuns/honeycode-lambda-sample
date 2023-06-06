@@ -1,15 +1,16 @@
 
 # Honeycode + Lambda
 
-- Honeycode와 APIG + Lambda (serverless stack) 을 사용하는 예시입니다.
-- 추가로 SageMaker endpoint invoke 를 넣는 예시도 있습니다.
+- 첫번째 예시는 Honeycode와 APIG + Lambda (serverless stack) 을 사용하는 예시입니다.
+- 두번째 예시는 SageMaker endpoint invoke 를 사용하는 예시
+- 해당 repo는 `us-west-2` region 기준으로 테스트 되었습니다.
 
 
 ## Honeycode 설정
 
 1. AWS account link
 2. workbook에 table 생성
-3. App 제작 (honeycode app export 기능이 없음.)
+3. App 제작 (honeycode app export 기능이 없기 때문에 직접 제작 필요)
 
 
 ## SAM 을 활용한 serverless backend 배포
@@ -65,8 +66,8 @@ webhook 실행 시 아래와 같은 결과가 나오면 정상적으로 배포�
 }
 ```
 
-참고로 SageMaker 연동 시에는, API gateway 주소가 달라질 수 있습니다. 해당 git 예시에서는 `scripts/chat.sh`의 API endpoint 를 참고해 주세요.
-
+- 참고로 SageMaker 연동 시에는, API gateway 주소가 달라질 수 있습니다. 해당 git 예시에서는 `scripts/chat.sh`의 API endpoint 를 참고해 주세요.
+- Honeycode에서 webhook으로 들어오는 request data를 받아서 sagemaker endpoint를 invoke 하는 부분은 `src/order-api/functions/post-chat/app.js`의 `Invoke from SageMaker` 부분을 참고해 주세요
 
 ### SageMaker endpoint 배포
 
