@@ -12,6 +12,8 @@
 2. workbook에 table 생성
 3. App 제작 (honeycode app export 기능이 없기 때문에 직접 제작 필요)
 
+- honeycode 설정 관련해서는 미리 전달된 how to AWS 문서 7번을 참고해 주세요.
+
 
 ## SAM 을 활용한 serverless backend 배포
 
@@ -23,8 +25,12 @@
 - `SM_ENDPOINT` : SageMaker endpoint는 미리 생성해 둔 (InService 상태의) SageMaker endpoint name 을 입력합니다.
 
 추가로 `samconfig.toml` 에서 값을 수정합니다.
-- `stack_name`, `s3_prefix`는 원하는 값으로 설정합니다.
+- `stack_name`, `s3_prefix`는 원하는 값으로 설정합니다. 그대로 놔두어도 괜찮습니다.
 - `s3_bucket`은, 먼저 s3에서 동일 region 의 bucket 생성 후 그 이름을 입력합니다.
+  - 만일 s3 bucket 생성이 어렵다면, 아래 명령어를 입력해서 bucket 생성 후 해당 값을 적어줍니다.
+    ```
+    aws s3 mb s3://[원하는 버킷명 - 중복되면 안됨]
+    ```
 
 Deploy를 실행합니다. 패키지 버전 및 IAM role 설정을 따로 해 줄 필요가 없기 떄문에 Cloud9 에서 실행하는 것을 추천합니다.
 
@@ -74,7 +80,5 @@ webhook 실행 시 아래와 같은 결과가 나오면 정상적으로 배포�
 post-chat이 호출하는 sagemaker endpoint 코드 예시
 - [여기](https://github.com/sungeuns/gen-ai-sagemaker/blob/main/Dolly/02-sagemaker-endpoint-dolly.ipynb) 를 참고해 주세요.
 
-좀 더 간단한 sagemaker endpoint 예시
-- TBU
-
+그 외 sagemaker endpoint의 경우에는 미리 전달된 how to AWS 문서 2번이나 10번을 참고해 주세요.
 
