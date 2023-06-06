@@ -2,9 +2,9 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "order-app"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-6k0y8j6f0g3j"
-s3_prefix = "order-app"
+stack_name = "honeycode-app"
+s3_bucket = "aws-sam-cli-honeycode-test-20230606"
+s3_prefix = "honeycode-app"
 region = "us-west-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"

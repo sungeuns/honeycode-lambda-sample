@@ -1,4 +1,4 @@
-export API_ENDPOINT=https://b1jxo0ptbj.execute-api.us-west-2.amazonaws.com/Dev/orders
+export API_ENDPOINT=https://tk3g1molxj.execute-api.us-west-2.amazonaws.com/Dev/orders
 
 curl -s --header "Content-Type: application/json" \
   --request POST \
