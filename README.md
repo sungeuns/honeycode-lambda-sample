@@ -50,6 +50,7 @@ cd scripts
 ./check_ddb.sh
 
 # 간단한 curl 명령어를 통해 webhook 가능한지 체크함.
+# 이걸 하기 전에 먼저 SageMaker endpoint 배포는 완료되어 있어야 하고, honeycode workbook id 도 알맞게 입력되어 있어야 합니다.
 ./post_webhook.sh
 ```
 
