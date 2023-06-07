@@ -115,6 +115,7 @@ Resources:
         Variables:
           TABLE_NAME: !Ref HoneyTable01
           WORKBOOK_ID: '542f451c-3ccb-4b58-bb5c-fbae8b07b268'
+          SM_ENDPOINT: 'titanic-automl-simple'
       Policies:
         Statement:
           - Effect: Allow
@@ -132,6 +133,11 @@ Resources:
           - Effect: Allow
             Action:
               - honeycode:*
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - sagemaker:*
             Resource:
               - "*"
 

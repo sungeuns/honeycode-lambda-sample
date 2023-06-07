@@ -3,10 +3,9 @@
 
 const AWS = require('aws-sdk');
 const honeycode = new AWS.Honeycode();
-const sagemaker = new AWS.SageMakerRuntime();
 const dynamodb = require('aws-sdk/clients/dynamodb');
 const docClient = new dynamodb.DocumentClient();
-const sagemakerEndpoint = process.env.SM_ENDPOINT;
+
 const tableName = process.env.TABLE_NAME;
 const workbookId = process.env.WORKBOOK_ID;  // Check the env value (Not working for local test)
 const DEFAULT_ORDER_STATUS = "PENDING" // Default Order Status will be written to DynamoDB
@@ -41,61 +40,6 @@ const processFunction = async (parsedBody, messageId) => {
     const data_x = parsedBody.data_x;
     const data_y = parsedBody.data_y;
     console.log(`** Input params ===>>> DX: ${data_x}, DY: ${data_y} `)
-    
-    // -------------------------------------------------------
-    // ===== Invoke from SageMaker ======
-    const min = 1;
-    const max = 9999;
-    const passenger_id = Math.floor(Math.random() * (max - min + 1)) + min;
-    
-    let p_class = Number(data_x);
-    if(p_class < 1){
-        p_class = 1
-    }
-    if(p_class > 3){
-        p_class = 3
-    }
-    const fare = 33 / p_class;
-    
-    let age = Number(data_y);
-    if (age < 0){
-        age = 1
-    }
-    if(age > 100){
-        age = 100
-    }
-    
-    const genders = ["male", "female"];
-    const idx = Math.floor(Math.random() * genders.length);
-    const gender = genders[idx];
-    const personName = "John Doe";
-    const inputValue = {
-        "instances": [
-            {
-                "features": [passenger_id, p_class, personName, gender, age, 0, 0, 330913, fare, "", "Q"]
-            }
-        ]
-    };
-    
-    const invokeParams = {
-        EndpointName: sagemakerEndpoint,
-        Body: JSON.stringify(inputValue),
-        ContentType: 'application/json'
-    };
-        
-    const invokeResult = await sagemaker.invokeEndpoint(invokeParams).promise();
-    const invokeBody = invokeResult.Body.toString('utf-8');
-    
-    console.log(`SageMaker result : ${invokeBody}`);
-    
-    let survived = "사망";
-    if(invokeBody == "1"){
-        survived = "생존";
-    }
-    
-    console.log(`*** Survied? => ${survived}`);
-    
-    // -------------------------------------------------------
     
     const req_id = messageId;
     
@@ -147,8 +91,13 @@ const processFunction = async (parsedBody, messageId) => {
     const timeId = tableColumns[3].tableColumnId;
     
     console.log(`** req_col : ${userRequestColId}, res_col: ${serverResponseColId}, info_col: ${infoColId}`);
+    
+    const min = 1;
+    const max = 9999;
+    const invokeResult = Math.floor(Math.random() * (max - min + 1)) + min;
+    
     const userRequestData = `data_x => ${data_x} || data_y => ${data_y}`;
-    const serverResponseData = `입력 [객실등급: ${data_x}, 승객 나이: ${data_y}] + 랜덤추가 [이름: ${personName}, 성별: ${gender}] => 결과: ${survived}`;
+    const serverResponseData = `You put X: ${data_x} and Y: ${data_y}, The result is ${invokeResult}`;
     const infoData = `FINISHED`;
     
     const rowsToCreate = [{
